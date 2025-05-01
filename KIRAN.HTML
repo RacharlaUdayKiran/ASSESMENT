@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WHOIS Lookup Tool</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+    <h1 class="text-2xl font-bold text-center mb-6 text-blue-700">WHOIS Lookup Tool</h1>
+
+    <input
+      id="domainInput"
+      type="text"
+      placeholder="Enter domain (e.g. amazon.com)"
+      class="w-full border border-gray-300 rounded px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+
+    <select id="typeSelect" class="w-full border border-gray-300 rounded px-4 py-2 mb-4">
+      <option value="domain">Domain Information</option>
+      <option value="contact">Contact Information</option>
+    </select>
+
+    <button
+      onclick="lookupWhois()"
+      class="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition"
+    >
+      Lookup
+    </button>
+
+    <p id="error" class="text-red-600 mt-4 text-center hidden"></p>
+
+    <div id="resultContainer" class="mt-6 hidden">
+      <h2 class="text-xl font-semibold mb-2">Result:</h2>
+      <table class="w-full border border-gray-200 rounded text-sm">
+        <tbody id="resultTable" class="divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    async function lookupWhois() {
+      const domain = document.getElementById("domainInput").value.trim();
+      const type = document.getElementById("typeSelect").value;
+      const errorEl = document.getElementById("error");
+      const resultEl = document.getElementById("resultContainer");
+      const resultTable = document.getElementById("resultTable");
+
+      errorEl.classList.add("hidden");
+      resultEl.classList.add("hidden");
+      resultTable.innerHTML = "";
+
+      if (!domain) {
+        errorEl.textContent = "Please enter a domain name.";
+        errorEl.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/whois", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ domain, type }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Lookup failed.");
+        }
+
+        for (const [key, value] of Object.entries(data)) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="py-2 px-3 font-medium text-gray-700">${key}</td>
+            <td class="py-2 px-3 text-gray-900">${value}</td>
+          `;
+          resultTable.appendChild(row);
+        }
+
+        resultEl.classList.remove("hidden");
+
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.remove("hidden");
+      }
+    }
+  </script>
+</body>
+</html>
+
+  
